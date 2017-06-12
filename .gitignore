@@ -1,0 +1,5 @@
+opengles-a20
+Makefile
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
