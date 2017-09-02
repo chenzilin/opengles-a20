@@ -1,9 +1,14 @@
-#include <stdlib.h>
+#include <wait.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
+
+#ifdef INITROOT_STARTUP
+#include <initroot_startup.h>
+#endif
 
 #define WIDTH 480
 #define HEIGHT 480
@@ -13,7 +18,7 @@ struct mali_native_window native_window = {
 	.height = HEIGHT,
 };
 
-static const char *vertex_shader_source =
+const char *vertex_shader_source =
 	"attribute vec4 aPosition;    \n"
 	"attribute vec4 aColor;       \n"
 	"                             \n"
@@ -24,7 +29,7 @@ static const char *vertex_shader_source =
 	"    vColor = aColor;         \n"
 	"    gl_Position = aPosition; \n"
 	"}                            \n";
-static const char *fragment_shader_source =
+const char *fragment_shader_source =
 	"precision mediump float;     \n"
 	"                             \n"
 	"varying vec4 vColor;         \n"
@@ -34,14 +39,14 @@ static const char *fragment_shader_source =
 	"    gl_FragColor = vColor;   \n"
 	"}                            \n";
 
-static GLfloat vVertices[] = {  0.0f,  0.5f, 0.0f,
-			       -0.5f, -0.5f, 0.0f,
-				0.5f, -0.5f, 0.0f };
-static GLfloat vColors[] = {1.0f, 0.0f, 0.0f, 1.0f,
-			    0.0f, 1.0f, 0.0f, 1.0f,
-			    0.0f, 0.0f, 1.0f, 1.0f};
+GLfloat vVertices[] = { 0.0f,  0.5f, 0.0f,
+		       -0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f };
+GLfloat vColors[] = { 1.0f, 0.0f, 0.0f, 1.0f,
+		      0.0f, 1.0f, 0.0f, 1.0f,
+		      0.0f, 0.0f, 1.0f, 1.0f};
 
-static EGLint const config_attribute_list[] = {
+EGLint const config_attribute_list[] = {
 	EGL_RED_SIZE, 8,
 	EGL_GREEN_SIZE, 8,
 	EGL_BLUE_SIZE, 8,
@@ -61,11 +66,11 @@ static EGLint const config_attribute_list[] = {
 	EGL_NONE
 };
 
-static EGLint window_attribute_list[] = {
+EGLint window_attribute_list[] = {
 	EGL_NONE
 };
 
-static const EGLint context_attribute_list[] = {
+const EGLint context_attribute_list[] = {
 	EGL_CONTEXT_CLIENT_VERSION, 2,
 	EGL_NONE
 };
@@ -73,8 +78,7 @@ static const EGLint context_attribute_list[] = {
 EGLDisplay egl_display;
 EGLSurface egl_surface;
 
-void
-Redraw(int width, int height)
+void Redraw(int width, int height)
 {
 	glViewport(0, 0, width, height);
 
@@ -85,8 +89,7 @@ Redraw(int width, int height)
 	eglSwapBuffers(egl_display, egl_surface);
 }
 
-int
-main(int argc, char *argv[])
+int server_main(int argc, char *argv[])
 {
 	EGLint egl_major, egl_minor;
 	EGLConfig config;
@@ -246,4 +249,46 @@ main(int argc, char *argv[])
 	Redraw(width, height);
 
 	return 0;
+}
+
+#ifdef INITROOT_STARTUP
+int startup_pre_end(void) { return 0; }
+#endif
+
+int main(int argc, char *argv[])
+{
+    pid_t pid = -1;
+    unsigned continue_loop = 1;
+
+#ifdef INITROOT_STARTUP
+    startup_begin();
+    startup_cend(startup_pre_end);
+#endif
+
+    do {
+        if (0 == (pid = fork())) {
+
+#ifdef RUN_SYSTEM_APP
+            // para1: app path, para2: app name, para3: app para
+            return execl("/bin/ls", "ls", "-l", NULL);
+#else
+            return server_main(argc, argv);
+#endif
+        }
+        else if (pid > 0) {
+            int status;
+            wait(&status);
+            fprintf(stdout, "server_main exit with status: %d\n", status);
+        }
+        else {
+            fprintf(stdout, "main fork server fail: %d\n", pid);
+            break;
+        }
+    } while (continue_loop);
+
+#ifndef INITROOT_STARTUP
+    return 0;
+#else
+    return startup_end(0);
+#endif
 }
