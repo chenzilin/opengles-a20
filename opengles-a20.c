@@ -267,13 +267,7 @@ int main(int argc, char *argv[])
 
     do {
         if (0 == (pid = fork())) {
-
-#ifdef RUN_SYSTEM_APP
-            // para1: app path, para2: app name, para3: app para
-            return execl("/bin/ls", "ls", "-l", NULL);
-#else
             return server_main(argc, argv);
-#endif
         }
         else if (pid > 0) {
             int status;

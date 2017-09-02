@@ -11,7 +11,6 @@ set (PROJECT_VERSION "${SRC_VERSION}")
 
 add_definitions(-DLINUX)
 add_definitions(-DEGL_API_FB)
-#add_definitions(-DRUN_SYSTEM_APP)
 add_definitions(-DINITROOT_STARTUP)
 
 target_link_libraries(opengles-a20 EGL)
