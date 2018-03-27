@@ -13,7 +13,11 @@
 #define WIDTH 480
 #define HEIGHT 480
 
+#ifdef USE_MALI1
+struct fbdev_window  native_window = {
+#else
 struct mali_native_window native_window = {
+#endif
 	.width = WIDTH,
 	.height = HEIGHT,
 };

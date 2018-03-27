@@ -11,10 +11,13 @@ set (PROJECT_VERSION "${SRC_VERSION}")
 
 add_definitions(-DLINUX)
 add_definitions(-DEGL_API_FB)
-add_definitions(-DINITROOT_STARTUP)
 
 target_link_libraries(opengles-a20 EGL)
 target_link_libraries(opengles-a20 GLESv2)
-target_link_libraries(opengles-a20 initroot_startup)
+
+#add_definitions(-DINITROOT_STARTUP)
+#target_link_libraries(opengles-a20 initroot_startup)
+
+#add_definitions(-DUSE_MALI1)
 
 install(TARGETS opengles-a20 DESTINATION bin)
